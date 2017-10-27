@@ -1,7 +1,9 @@
 /**
  * 
  */
-
+function sendClear(){
+	browser.runtime.sendMessage();
+}
 function ElementRow() {
 	this.row = document.createElement("tr");
 	this.checkBox = document.createElement("input");
