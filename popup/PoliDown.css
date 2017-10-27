@@ -1,0 +1,14 @@
+@CHARSET "UTF-8";
+body {
+	width: 400px;
+	height: 300px;
+}
+
+.downloadTable{
+	width: 100%;
+	padding: 2%;
+	text-align: center;
+}
+td{
+	width: auto;
+}
