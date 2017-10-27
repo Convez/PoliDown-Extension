@@ -16,7 +16,7 @@
   "browser_action": {
     "default_icon": "icons/beasts-32.png",
     "default_title": "PoliDown",
-    "default_popup": "popup/choose_beast.html"
+    "default_popup": "popup/PoliDown.html"
   },
 
   "web_accessible_resources": [

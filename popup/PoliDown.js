@@ -32,6 +32,10 @@ function ElementRow() {
 		return this.row;
 	}
 }
-
-var cell = new ElementRow();
-document.getElementById("downloadTable").appendChild(cell.draw());
+var cells = new Array();
+for (var i=0;i<10;i++){
+	var cell = new ElementRow();
+	cells.push(cell);
+	document.getElementById("downloadTable").appendChild(cell.draw());
+	
+}

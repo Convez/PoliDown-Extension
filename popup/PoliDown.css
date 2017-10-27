@@ -1,6 +1,6 @@
 @CHARSET "UTF-8";
-body {
-	width: 400px;
+html body {
+	width: 650px;
 	height: 300px;
 }
 
@@ -11,4 +11,8 @@ body {
 }
 td{
 	width: auto;
+	margin-right: 5px;
+}
+td.last-child{
+	margin-right:0px;
 }
