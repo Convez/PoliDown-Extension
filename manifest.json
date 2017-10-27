@@ -12,6 +12,16 @@
   "permissions": [
     "activeTab"
   ],
+  "content_scripts":[
+    {
+      "matches": [
+        "https://elearning.polito.it/main/videolezioni/*",
+        "https://didattica.polito.it/pls/portal30/*",
+        "https://elearning.polito.it/gadgets/video/*"
+      ],
+      "js": ["enabler.js"]
+    }
+],
 
   "browser_action": {
     "default_icon": "icons/beasts-32.png",
@@ -19,10 +29,8 @@
     "default_popup": "popup/PoliDown.html"
   },
 
-  "web_accessible_resources": [
-    "beasts/frog.jpg",
-    "beasts/turtle.jpg",
-    "beasts/snake.jpg"
-  ]
+  "background":{
+    "scripts": ["background.js"]
+  }
 
 }

@@ -9,10 +9,10 @@ function ElementRow() {
 	this.checkBox.checked="checked";
 	this.nameTag = document.createElement("div");
 	this.nameTag.class="lessonName";
-	this.nameTag.innerText="Lezione2";
+	this.nameTag.innerText="Lezione 5";
 	this.progressBar = document.createElement("progress");
 	this.progressBar.max=100;
-	this.progressBar.value=10;
+	this.progressBar.value=97;
 	this.downloadButton = document.createElement("input");
 	this.downloadButton.type="button";
 	this.downloadButton.value="Download";
@@ -37,5 +37,4 @@ for (var i=0;i<10;i++){
 	var cell = new ElementRow();
 	cells.push(cell);
 	document.getElementById("downloadTable").appendChild(cell.draw());
-	
 }
