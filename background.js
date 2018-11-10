@@ -1,21 +1,26 @@
 /**
- * 
- * @param {string} name 
- * @param {string} url 
+ *
+ * @param {string} name
+ * @param {string} url
  */
-function Lesson(name,url){
-    this.name=name;
-    this.videoUrl=url;
-    this.willDownload=true;
-    this.canDownlaod=false;
+class Lesson {
+    constructor(name, url) {
+        this.name = name;
+        this.videoUrl = url;
+        this.willDownload = true;
+        this.disableDownload = false;
+        this.percentage = 0.0;
+    }
 }
 /**
- * 
- * @param {string} name 
+ *
+ * @param {string} name
  */
-function Course(name){
-    this.name=name;
-    this.lessons = new Map();
+class Course {
+    constructor(name) {
+        this.name = name;
+        this.lessons = new Map();
+    }
 }
 
 var courses = new Map();
@@ -24,13 +29,18 @@ var courses = new Map();
  * @param {*} fromPage 
  */
 async function loadCourse(pageValues){
+    console.log("Parsing page");
     var element = document.createElement("html");
     element.innerHTML = pageValues.doc;
     var courseName = element.getElementsByClassName("text-primary");
     if(courseName.length>0){
         courseName = courseName[0].innerText;
     }else{
-        courseName = element.querySelector("#rightZone").getElementsByTagName("h2")[0].innerText;
+
+        courseName = element.querySelector("#rightZone")
+        if(courseName.length>0){
+            courseName = courseName.getElementsByTagName("h2")[0].innerText;
+        }
     }
     if(!courses.has(courseName)){
         var course = new Course(courseName);
@@ -49,7 +59,7 @@ async function loadCourse(pageValues){
                 if(cl!="argoLink"){
                     if(ref!=undefined){
                         if(ref.startsWith(basePage)){
-                            course.lessons.set(s.innerText,baseUrl+ref);
+                            course.lessons.set(s.innerText,new Lesson(s.innerText,baseUrl+ref));
                         }
                     }
                 }
@@ -61,21 +71,71 @@ async function loadCourse(pageValues){
                 }
             }
         }
-        course.lessons.forEach((value,key)=>console.log(key,value.videoUrl));
     }
 }
 
 
 function startEnabling(pageValues){
     console.log("on video page");
-    browser.browserAction.setIcon({path:"icons/beasts-32-red.png"});    
+    // browser.browserAction.setIcon({path:"icons/beasts-32-red.png"});    
     loadCourse(pageValues);
 }
+
 function clearCourses(){
     courses.clear();
 }
 
-browser.runtime.onMessage.addListener(clearCourses);
+function sendTabCourse(courseName){
+    if(courses.has(courseName)){
+        browser.runtime.sendMessage({
+            command: "printCourse",
+            params: courses.get(courseName)
+        });
+    }
+}
+function changeLesson(course,lesson){
+    if(courses.has(course)){
+        course = courses.get(course);
+        if(course.lessons.has(lesson)){
+            lesson = course.lessons.get(lesson);
+            lesson.willDownload = !lesson.willDownload;
+        }
+    }
+}
+
+function downloadLesson(course,lesson,url){
+    console.log(url);
+    if(courses.has(course)){
+        course = courses.get(course);
+        if(course.lessons.has(lesson)){
+            lesson = course.lessons.get(lesson);
+            lesson.disableDownload=true;
+            let dld = browser.downloads.createDownload();
+            console.log(dld);
+        }
+    }
+}
+
+function handleMessages(message){
+    switch (message.command){
+        case "scanPage":
+            startEnabling(message.params);
+            break;
+        case "clearCourses":
+            clearCourses();
+            break;
+        case "sendTabCourse":
+            sendTabCourse(message.params);
+            break;
+        case "changeLesson":
+            changeLesson(message.params.course,message.params.lesson);
+            break;
+
+        case "downloadLesson":
+            downloadLesson(message.params.course,message.params.lesson,message.params.url);
+        break;
+    }    
+}
 
 //Start Listener listening for new pages
-browser.runtime.onMessage.addListener(startEnabling);
+browser.runtime.onMessage.addListener(handleMessages);
