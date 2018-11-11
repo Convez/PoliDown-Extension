@@ -29,7 +29,6 @@ var courses = new Map();
  * @param {*} fromPage 
  */
 async function loadCourse(pageValues){
-    console.log("Parsing page");
     var element = document.createElement("html");
     element.innerHTML = pageValues.doc;
     var courseName = element.getElementsByClassName("text-primary");
@@ -76,8 +75,6 @@ async function loadCourse(pageValues){
 
 
 function startEnabling(pageValues){
-    console.log("on video page");
-    // browser.browserAction.setIcon({path:"icons/beasts-32-red.png"});    
     loadCourse(pageValues);
 }
 
@@ -87,11 +84,51 @@ function clearCourses(){
 
 function sendTabCourse(courseName){
     if(courses.has(courseName)){
+        let course = courses.get(courseName);
+        course.lessons.forEach(updatePercentage);
         browser.runtime.sendMessage({
             command: "printCourse",
-            params: courses.get(courseName)
+            params: course
         });
     }
+}
+function sendTabCourseForUpdate(courseName){
+    if(courses.has(courseName)){
+        let course = courses.get(courseName);
+        course.lessons.forEach(updatePercentage);
+        browser.runtime.sendMessage({
+            command: "updateCourse",
+            params: course
+        });
+    }
+}
+/**
+ * 
+ * @param {Lesson} lesson 
+ * @param {string} key 
+ */
+function updatePercentage(lesson,key){
+    if(lesson.downloadId===undefined){
+        return;
+    }
+    browser.downloads.search({id:lesson.downloadId})
+    .then((downloadItem)=>{
+        downloadItem = downloadItem[0];
+        lesson.state = downloadItem.state;
+        if(downloadItem.state === "complete"){
+            lesson.percentage = 100;
+            return;
+        }
+        if(downloadItem.state === "interrupted"){
+            lesson.disableDownload = false;
+            return;
+        }
+        if (downloadItem.totalBytes===-1){
+            lesson.percentage = 0.0;
+            return;
+        }
+        lesson.percentage = downloadItem.bytesReceived/downloadItem.totalBytes*100;
+    })
 }
 function changeLesson(course,lesson){
     if(courses.has(course)){
@@ -103,21 +140,72 @@ function changeLesson(course,lesson){
     }
 }
 
-function downloadLesson(course,lesson,url){
-    console.log(url);
+async function downloadLesson(course,lesson,url){
     if(courses.has(course)){
         course = courses.get(course);
         if(course.lessons.has(lesson)){
             lesson = course.lessons.get(lesson);
             lesson.disableDownload=true;
-            let dld = browser.downloads.createDownload();
-            console.log(dld);
+            // Funziona ma scarica nella barra del browser
+            let downloadId = await browser.downloads.download({
+                url:url,
+                filename:lesson.name+".mp4"
+            });
+            lesson.downloadId = downloadId;
         }
     }
 }
-
+function cancelDownload(params){
+    browser.downloads.cancel(params.downloadId).then(()=>{});
+}
+function showDownload(params){
+    browser.downloads.show(params.downloadId).then(()=>{});
+}
+function downloadAll(course){
+    courses.get(course).lessons.forEach((lesson,key)=>{
+        if(lesson.state!==undefined && lesson.state!== "interrupted"){
+            return;
+        }
+        if(!lesson.willDownload){
+            return;
+        }
+        browser.tabs.query({active:true}).then((tabs)=>{
+            browser.tabs.sendMessage(tabs[0].id,{
+                command:"fetchURL",
+                params:{
+                    course:course,
+                    lesson:lesson.name,
+                    url: lesson.videoUrl
+                }
+            });
+        });
+    })
+}
+function cancelAll(course){
+    courses.get(course).lessons.forEach((lesson, key)=>{
+        if(lesson.state===undefined){
+            return;
+        }
+        if(lesson.state!== "in_progress"){
+            return;
+        }
+        cancelDownload(lesson);
+    });
+}
 function handleMessages(message){
     switch (message.command){
+        case "downloadAll":
+            downloadAll(message.params);
+            break;
+        case "cancelAll":
+            cancelAll(message.params);
+            break;
+        case "showDownload":
+            showDownload(message.params);
+            break;
+        case "cancelDownload":
+            cancelDownload(message.params);
+            break;
         case "scanPage":
             startEnabling(message.params);
             break;
@@ -126,6 +214,9 @@ function handleMessages(message){
             break;
         case "sendTabCourse":
             sendTabCourse(message.params);
+            break;
+        case "sendTabCourseForUpdate":
+            sendTabCourseForUpdate(message.params);
             break;
         case "changeLesson":
             changeLesson(message.params.course,message.params.lesson);
@@ -139,3 +230,25 @@ function handleMessages(message){
 
 //Start Listener listening for new pages
 browser.runtime.onMessage.addListener(handleMessages);
+let matches = [
+    "https://elearning.polito.it/main/videolezioni/",
+    "https://didattica.polito.it/pls/portal30/",
+    "https://elearning.polito.it/gadgets/video/"
+  ];
+browser.tabs.onActivated.addListener(async (event)=>{
+    let tabId = event.tabId;
+    let match = false;
+    let tabs = await browser.tabs.query({active:true});
+    matches.forEach((str)=>{
+        if(match)
+            return;
+        console.log(tabs[0].url);
+        match = tabs[0].url.includes(str);
+    });
+    console.log(match);
+    if(match){
+        browser.browserAction.setIcon({path:"icons/beasts-32-red.png"});
+    }else{
+        browser.browserAction.setIcon({path:"icons/beasts-32.png"});
+    }
+})

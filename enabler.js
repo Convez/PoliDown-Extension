@@ -6,7 +6,6 @@ var Page = class {
         this.cookies = c;
     }
 }
-console.log("Executing enabler");
 
 function getCourseName(){
     var courseName = document.querySelector(".text-primary").innerHTML;
@@ -44,6 +43,13 @@ function inPageListener(message){
             browser.runtime.sendMessage({
                 command: "sendTabCourse",
                 params: courseName
+            });
+            break;
+        case "getTabCourseForUpdate":
+            let course = getCourseName();
+            browser.runtime.sendMessage({
+                command: "sendTabCourseForUpdate",
+                params: course
             });
             break;
         case "fetchURL":
