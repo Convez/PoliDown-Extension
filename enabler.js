@@ -8,9 +8,11 @@ var Page = class {
 }
 
 function getCourseName(){
-    var courseName = document.querySelector(".text-primary").innerHTML;
+    var courseName = document.querySelector(".text-primary");
+    courseName = courseName!=null?courseName.innerHTML:courseName;
     var cn = document.querySelector("#rightZone");
-    cn = cn!=null?cn.querySelector("h2"):cn;
+    cn = cn!=null?cn.querySelector("h2").innerText:cn;
+    console.log(cn);
     return courseName != null? courseName: cn;
 }
 function fetchVideoURL(params){
@@ -21,7 +23,15 @@ function fetchVideoURL(params){
         {
             if (request.readyState==4 && request.status==200)
             {
-                let videoURL = window.location.origin + request.responseXML.querySelector('[id^="video"]').getAttribute("href");
+                let videoRelURL = request.responseXML.querySelector('[id^="video"]').getAttribute("href");
+                let videoURL = "";
+                if(window.location.href.startsWith("https://elearning.polito.it/gadgets/video/")){
+                    videoURL="https://elearning.polito.it/gadgets/video/"+videoRelURL;
+                }else{
+                    videoURL="https://didattica.polito.it/"+videoRelURL;
+                }
+                console.log(videoURL);
+                console.log("Origin: "+window.location.origin);
                 browser.runtime.sendMessage({
 					command:"downloadLesson",
 					params:{
@@ -37,9 +47,11 @@ function fetchVideoURL(params){
         request.send();
 }
 function inPageListener(message){
+    console.log(message);
     switch(message.command){
         case "getTabCourse":
             let courseName = getCourseName();
+            console.log(courseName);
             browser.runtime.sendMessage({
                 command: "sendTabCourse",
                 params: courseName
@@ -63,3 +75,4 @@ browser.runtime.sendMessage({
     command:"scanPage",
     params: new Page(document.documentElement.innerHTML,document.URL,document.cookie)
 });
+browser.browserAction.setIcon({path:"icons/beasts-32-red.png"});

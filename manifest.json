@@ -2,7 +2,7 @@
 
   "manifest_version": 2,
   "name": "PoliDown",
-  "version": "1.0",
+  "version": "1.0.4",
 
   "description": "Download helper for polito videolessons",
   "icons": {

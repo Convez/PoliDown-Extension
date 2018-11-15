@@ -29,17 +29,15 @@ var courses = new Map();
  * @param {*} fromPage 
  */
 async function loadCourse(pageValues){
-    var element = document.createElement("html");
-    element.innerHTML = pageValues.doc;
+    let parser = new DOMParser();
+    var element = parser.parseFromString(pageValues.doc,"text/html");
     var courseName = element.getElementsByClassName("text-primary");
     if(courseName.length>0){
         courseName = courseName[0].innerText;
     }else{
 
         courseName = element.querySelector("#rightZone")
-        if(courseName.length>0){
-            courseName = courseName.getElementsByTagName("h2")[0].innerText;
-        }
+        courseName = courseName.getElementsByTagName("h2")[0].innerText;
     }
     if(!courses.has(courseName)){
         var course = new Course(courseName);
@@ -70,6 +68,7 @@ async function loadCourse(pageValues){
                 }
             }
         }
+        console.log(course);
     }
 }
 
@@ -146,10 +145,11 @@ async function downloadLesson(course,lesson,url){
         if(course.lessons.has(lesson)){
             lesson = course.lessons.get(lesson);
             lesson.disableDownload=true;
+            console.log(url);
             // Funziona ma scarica nella barra del browser
             let downloadId = await browser.downloads.download({
                 url:url,
-                filename:lesson.name+".mp4"
+                filename:course.name+"/"+lesson.name+".mp4"
             });
             lesson.downloadId = downloadId;
         }
@@ -231,7 +231,6 @@ function handleMessages(message){
 //Start Listener listening for new pages
 browser.runtime.onMessage.addListener(handleMessages);
 let matches = [
-    "https://elearning.polito.it/main/videolezioni/",
     "https://didattica.polito.it/pls/portal30/",
     "https://elearning.polito.it/gadgets/video/"
   ];
