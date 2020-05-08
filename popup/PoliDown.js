@@ -136,7 +136,7 @@ function handleMessages(message){
 		case "updateCourse":
 			course = message.params.name;
 			let sDown = false;
-			message.params.lessons.forEach((lesson,key)=>{
+			message.params.lessons.forEach(async (lesson,key)=>{
 				if (sDown === false)
 					sDown = lesson.state === "in_progress";
 				let row = rows.get(lesson.name);
